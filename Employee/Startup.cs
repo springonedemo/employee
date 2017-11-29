@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-//using Pivotal.Discovery.Client;
-//using Steeltoe.Extensions.Configuration;
 
+using Pivotal.Discovery.Client;\
 
 namespace Employee
 {
@@ -18,8 +19,6 @@ namespace Employee
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
-               // .AddConfigServer(env)
-               // .AddCloudFoundry();
             Configuration = builder.Build();
         }
 
@@ -28,11 +27,17 @@ namespace Employee
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddEntityFramework()
+                .AddDbContext<FortuneContext>(options => options.UseInMemoryDatabase());
+
+            services.AddSingleton<IFortuneRepository, FortuneRepository>();
+
+            services.AddDiscoveryClient(Configuration);
+
+            services.AddLogging();
+
             // Add framework services.
             services.AddMvc();
-            //services.AddDiscoveryClient(Configuration);
-            //services.AddConfigServer(Configuration);
-            services.Configure<ConfigServerData>(Configuration);
         }
 
 
@@ -42,8 +47,13 @@ namespace Employee
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            app.UseStaticFiles();
+
             app.UseMvc();
-            //app.UseDiscoveryClient();
+
+            app.UseDiscoveryClient();
+
+            SampleData.InitializeFortunesAsync(app.ApplicationServices).Wait();
         }
     }
 }
