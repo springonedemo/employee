@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CloudFoundry.ViewModels.Values;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Steeltoe.Extensions.Configuration.CloudFoundry;
 
 namespace Employee.Controllers
 {
@@ -15,6 +18,18 @@ namespace Employee.Controllers
         //{
         //    return new string[] { "value1", "value2" };
         //}
+
+        private CloudFoundryServicesOptions CloudFoundryServices { get; set; }
+        private CloudFoundryApplicationOptions CloudFoundryApplication { get; set; }
+
+        public ValuesController(
+            IOptions<CloudFoundryApplicationOptions> appOptions,
+            IOptions<CloudFoundryServicesOptions> servOptions)
+        {
+            CloudFoundryServices = servOptions.Value;
+            CloudFoundryApplication = appOptions.Value;
+        }
+
         [HttpGet]
         public SampleData Get()
         {
@@ -92,6 +107,13 @@ namespace Employee.Controllers
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
+        }
+
+        public IActionResult CloudFoundry()
+        {
+            return View(new CloudFoundryViewModel(
+                CloudFoundryApplication == null ? new CloudFoundryApplicationOptions() : CloudFoundryApplication,
+                CloudFoundryServices == null ? new CloudFoundryServicesOptions() : CloudFoundryServices));
         }
     }
 }

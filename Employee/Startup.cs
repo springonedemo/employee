@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Pivotal.Discovery.Client;
 using Steeltoe.Extensions.Configuration;
-
+using Steeltoe.Extensions.Configuration.CloudFoundry;
 
 namespace Employee
 {
@@ -18,6 +18,8 @@ namespace Employee
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables()
+                // Add Steeltoe CloudFoundry provider
+                .AddCloudFoundry()
                 .AddConfigServer(env)
                 .AddCloudFoundry();
             Configuration = builder.Build();
@@ -28,6 +30,13 @@ namespace Employee
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddOptions();
+
+            // Add Steeltoe CloudFoundry Options to service container
+            services.Configure<CloudFoundryApplicationOptions>(Configuration);
+            services.Configure<CloudFoundryServicesOptions>(Configuration);
+
+
             // Add framework services.
             services.AddMvc();
             services.AddDiscoveryClient(Configuration);
