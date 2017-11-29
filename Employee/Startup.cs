@@ -11,8 +11,10 @@ namespace Employee
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup(IHostingEnvironment env, ILoggerFactory logFactory)
         {
+            logFactory.AddConsole(minLevel: LogLevel.Debug);
+
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -21,7 +23,15 @@ namespace Employee
                 // Add Steeltoe CloudFoundry provider
                 .AddCloudFoundry()
                 .AddConfigServer(env)
-                .AddCloudFoundry();
+                .AddCloudFoundry()
+
+                // Adds the Spring Cloud Configuration Server as a configuration source.
+                // The settings used in contacting the Server will be picked up from
+                // appsettings.json, and then overriden from any environment variables, and then
+                // overriden from the CloudFoundry environment variable settings. 
+                // Defaults will be used for any settings not present in any of the earlier added 
+                // sources.  See ConfigServerClientSettings for defaults.
+                .AddConfigServer(env, logFactory);
             Configuration = builder.Build();
         }
 
@@ -36,6 +46,16 @@ namespace Employee
             services.Configure<CloudFoundryApplicationOptions>(Configuration);
             services.Configure<CloudFoundryServicesOptions>(Configuration);
 
+
+            // Optional: Adds IConfigurationRoot as a service and also configures  IOption<ConfigServerClientSettingsOptions>,
+            // IOption<CloudFoundryApplicationOptions>, IOption<CloudFoundryServicesOptions>
+            // Performs:
+            //      services.AddOptions();
+            //      services.Configure<ConfigServerClientSettingsOptions>(config);
+            //      services.Configure<CloudFoundryApplicationOptions>(config);
+            //      services.Configure<CloudFoundryServicesOptions>(config);
+            //      services.AddInstance<IConfigurationRoot>(config);
+            services.AddConfigServer(Configuration);
 
             // Add framework services.
             services.AddMvc();

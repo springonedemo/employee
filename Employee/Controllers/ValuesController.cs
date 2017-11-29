@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using CloudFoundry.ViewModels.Values;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Pivotal.Extensions.Configuration.ConfigServer;
 using Steeltoe.Extensions.Configuration.CloudFoundry;
 
 namespace Employee.Controllers
@@ -19,15 +21,42 @@ namespace Employee.Controllers
         //    return new string[] { "value1", "value2" };
         //}
 
+
+        private IOptionsSnapshot<ConfigServerData> IConfigServerData { get; set; }
+
+        private ConfigServerClientSettingsOptions ConfigServerClientSettingsOptions { get; set; }
+        private IConfigurationRoot Config { get; set; }
+
+
         private CloudFoundryServicesOptions CloudFoundryServices { get; set; }
         private CloudFoundryApplicationOptions CloudFoundryApplication { get; set; }
 
-        public ValuesController(
+        public ValuesController(IConfigurationRoot config,
+            IOptionsSnapshot<ConfigServerData> configServerData,
             IOptions<CloudFoundryApplicationOptions> appOptions,
-            IOptions<CloudFoundryServicesOptions> servOptions)
+            IOptions<CloudFoundryServicesOptions> servOptions,
+            IOptions<ConfigServerClientSettingsOptions> confgServerSettings)
         {
-            CloudFoundryServices = servOptions.Value;
-            CloudFoundryApplication = appOptions.Value;
+            
+            // The ASP.NET DI mechanism injects the data retrieved from the
+            // Spring Cloud Config Server as an IOptionsSnapshot<ConfigServerData>
+            // since we added "services.Configure<ConfigServerData>(Configuration);"
+            // in the StartUp class
+            if (configServerData != null)
+                IConfigServerData = configServerData;
+
+            // The ASP.NET DI mechanism injects these as well, see
+            // public void ConfigureServices(IServiceCollection services) in Startup class
+            if (servOptions != null)
+                CloudFoundryServices = servOptions.Value;
+            if (appOptions != null)
+                CloudFoundryApplication = appOptions.Value;
+
+            // Inject the settings used in communicating with the Spring Cloud Config Server
+            if (confgServerSettings != null)
+                ConfigServerClientSettingsOptions = confgServerSettings.Value;
+
+            Config = config;
         }
 
         [HttpGet]
@@ -107,6 +136,42 @@ namespace Employee.Controllers
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
+        }
+
+
+        public IActionResult ConfigServerSettings()
+        {
+            if (ConfigServerClientSettingsOptions != null)
+            {
+                ViewData["AccessTokenUri"] = ConfigServerClientSettingsOptions.AccessTokenUri;
+                ViewData["ClientId"] = ConfigServerClientSettingsOptions.ClientId;
+                ViewData["ClientSecret"] = ConfigServerClientSettingsOptions.ClientSecret;
+                ViewData["Enabled"] = ConfigServerClientSettingsOptions.Enabled;
+                ViewData["Environment"] = ConfigServerClientSettingsOptions.Environment;
+                ViewData["FailFast"] = ConfigServerClientSettingsOptions.FailFast;
+                ViewData["Label"] = ConfigServerClientSettingsOptions.Label;
+                ViewData["Name"] = ConfigServerClientSettingsOptions.Name;
+                ViewData["Password"] = ConfigServerClientSettingsOptions.Password;
+                ViewData["Uri"] = ConfigServerClientSettingsOptions.Uri;
+                ViewData["Username"] = ConfigServerClientSettingsOptions.Username;
+                ViewData["ValidateCertificates"] = ConfigServerClientSettingsOptions.ValidateCertificates;
+            }
+            else
+            {
+                ViewData["AccessTokenUri"] = "Not Available";
+                ViewData["ClientId"] = "Not Available";
+                ViewData["ClientSecret"] = "Not Available";
+                ViewData["Enabled"] = "Not Available";
+                ViewData["Environment"] = "Not Available";
+                ViewData["FailFast"] = "Not Available";
+                ViewData["Label"] = "Not Available";
+                ViewData["Name"] = "Not Available";
+                ViewData["Password"] = "Not Available";
+                ViewData["Uri"] = "Not Available";
+                ViewData["Username"] = "Not Available";
+                ViewData["ValidateCertificates"] = "Not Available";
+            }
+            return View();
         }
 
         public IActionResult CloudFoundry()
