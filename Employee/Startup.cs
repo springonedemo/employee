@@ -57,6 +57,12 @@ namespace Employee
             //      services.AddInstance<IConfigurationRoot>(config);
             services.AddConfigServer(Configuration);
 
+            
+            services.AddDiscoveryClient(Configuration);
+
+            services.AddLogging();
+
+
             // Add framework services.
             services.AddMvc();
             services.AddDiscoveryClient(Configuration);
@@ -71,6 +77,8 @@ namespace Employee
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            
+            //app.UseStaticFiles();
             app.UseMvc();
             app.UseDiscoveryClient();
         }
