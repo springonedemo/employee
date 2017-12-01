@@ -65,8 +65,6 @@ namespace Employee
 
             // Add framework services.
             services.AddMvc();
-            services.AddDiscoveryClient(Configuration);
-            services.AddConfigServer(Configuration);
             services.Configure<ConfigServerData>(Configuration);
         }
 
