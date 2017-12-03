@@ -14,14 +14,6 @@ namespace Employee.Controllers
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
-        // GET api/values
-        //[HttpGet]
-        //public IEnumerable<string> Get()
-        //{
-        //    return new string[] { "value1", "value2" };
-        //}
-
-
         private IOptionsSnapshot<ConfigServerData> IConfigServerData { get; set; }
 
         private ConfigServerClientSettingsOptions ConfigServerClientSettingsOptions { get; set; }
@@ -67,15 +59,7 @@ namespace Employee.Controllers
             s.CompanyName = "Capgemini";
             //s.ID = 1;
             return s;
-            //return new string[] { "Hi I am one of the Microservice from another Microservice by using Steelsteo"};
-            //return new string[] { "Hi I am value from Another Microservice", "value2" };
         }
-        // GET api/values/5
-        //[HttpGet("{id}")]
-        //public string Get(int id)
-        //{
-        //    return "value";
-        //}
         [HttpGet("{id}")]
         public SampleData Get(int id)
         {
